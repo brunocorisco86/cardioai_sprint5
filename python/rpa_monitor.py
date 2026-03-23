@@ -2,60 +2,121 @@ import json
 import time
 from datetime import datetime
 import os
+import mysql.connector
+from pymongo import MongoClient
+from dotenv import load_dotenv
+from urllib.parse import urlparse
 
-# Simulação de Banco de Dados Relacional (Simulando clinical_records)
-# Em produção, usaríamos sqlalchemy com a DATABASE_URL
-DB_SIMULADO = [
-    {"id": 1, "userId": 10, "pa_sis": 120, "pa_dia": 80, "fc": 70, "created_at": "2026-03-22 10:00:00"},
-    {"id": 2, "userId": 10, "pa_sis": 145, "pa_dia": 95, "fc": 88, "created_at": "2026-03-22 11:00:00"},
-    {"id": 3, "userId": 11, "pa_sis": 130, "pa_dia": 85, "fc": 75, "created_at": "2026-03-22 10:30:00"},
-    {"id": 4, "userId": 10, "pa_sis": 150, "pa_dia": 100, "fc": 95, "created_at": "2026-03-22 12:00:00"},
-]
+load_dotenv()
 
-LOG_FILE = "python/execution_logs.json"
+# Configurações de Banco de Dados Relacional (MySQL)
+DB_CONFIG = {
+    'host': os.getenv('DB_HOST', 'localhost'),
+    'user': os.getenv('DB_USER', 'root'),
+    'password': os.getenv('DB_PASSWORD', 'password'),
+    'database': os.getenv('DB_NAME', 'cardioia'),
+    'port': int(os.getenv('DB_PORT', 3306))
+}
+
+# Configuração de Banco de Dados Não-Relacional (MongoDB)
+MONGO_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
+MONGO_DB_NAME = os.getenv('MONGO_DB_NAME', 'cardioia_logs')
+
+def get_mysql_connection():
+    try:
+        # Tentar extrair do DATABASE_URL se existir
+        db_url = os.getenv('DATABASE_URL')
+        if db_url and db_url.startswith('mysql://'):
+            url = urlparse(db_url)
+            return mysql.connector.connect(
+                user=url.username,
+                password=url.password,
+                host=url.hostname,
+                port=url.port or 3306,
+                database=url.path.lstrip('/')
+            )
+
+        return mysql.connector.connect(**DB_CONFIG)
+    except Exception as e:
+        print(f"Erro ao conectar ao MySQL: {e}")
+        return None
+
+def get_mongo_collection():
+    try:
+        client = MongoClient(MONGO_URI)
+        db = client[MONGO_DB_NAME]
+        return db['execution_logs']
+    except Exception as e:
+        print(f"Erro ao conectar ao MongoDB: {e}")
+        return None
 
 def monitorar_sinais_vitais():
     print("Iniciando Monitoramento RPA - CardioIA")
     
-    logs = []
-    if os.path.exists(LOG_FILE):
-        with open(LOG_FILE, 'r') as f:
-            logs = json.load(f)
+    conn = get_mysql_connection()
+    if not conn:
+        print("Falha na conexão com MySQL. Abortando.")
+        return
 
-    for registro in DB_SIMULADO:
+    mongo_collection = get_mongo_collection()
+    if mongo_collection is None:
+        print("Falha na conexão com MongoDB. Logs serão apenas impressos.")
+
+    cursor = conn.cursor(dictionary=True)
+
+    # Busca registros clínicos recentes (exemplo: últimos 100)
+    cursor.execute("SELECT * FROM clinical_records ORDER BY createdAt DESC LIMIT 100")
+    registros = cursor.fetchall()
+
+    for registro in registros:
         print(f"Processando registro {registro['id']} do usuário {registro['userId']}...")
         
         # Lógica de IA/Regras de Negócio para identificar anomalias
         anomalia = False
         mensagem = "Sinais normais"
         
-        if registro['pa_sis'] > 140 or registro['pa_dia'] > 90:
+        # Regras simples de triagem (IA Simbólica/Heurística)
+        if registro['pressaoSistolica'] > 140 or registro['pressaoDiastolica'] > 90:
             anomalia = True
             mensagem = "ALERTA: Hipertensão detectada!"
-        elif registro['fc'] > 100:
+        elif registro['frequenciaCardiaca'] > 100:
             anomalia = True
             mensagem = "ALERTA: Taquicardia detectada!"
+        elif registro['frequenciaCardiaca'] < 50:
+            anomalia = True
+            mensagem = "ALERTA: Bradicardia detectada!"
             
-        # Registrar no log (Não-relacional)
+        # Registrar no log (Não-relacional - MongoDB)
         log_entry = {
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "timestamp": datetime.now(),
             "registro_id": registro['id'],
             "usuario_id": registro['userId'],
             "status": "ANOMALIA" if anomalia else "OK",
             "mensagem": mensagem,
-            "dados": registro
+            "dados": {
+                "pa_sis": registro['pressaoSistolica'],
+                "pa_dia": registro['pressaoDiastolica'],
+                "fc": registro['frequenciaCardiaca'],
+                "created_at": registro['createdAt'].strftime("%Y-%m-%d %H:%M:%S") if isinstance(registro['createdAt'], datetime) else registro['createdAt']
+            }
         }
         
-        logs.append(log_entry)
+        if mongo_collection is not None:
+            mongo_collection.insert_one(log_entry)
         
-        if anomalia:
-            print(f"!!! {mensagem} para usuário {registro['userId']}")
+        # Atualizar o status do registro no banco relacional se necessário
+        if anomalia and registro['status'] == 'normal':
+            with conn.cursor() as update_cursor:
+                update_cursor.execute(
+                    "UPDATE clinical_records SET status = %s WHERE id = %s",
+                    ("alerta", registro['id'])
+                )
+                conn.commit()
+            print(f"!!! {mensagem} para usuário {registro['userId']} - Status atualizado para 'alerta'")
             
-    # Salvar logs no formato JSON (Não-relacional)
-    with open(LOG_FILE, 'w', encoding='utf-8') as f:
-        json.dump(logs, f, indent=4, ensure_all_ascii=False)
-        
-    print(f"Monitoramento finalizado. {len(logs)} logs registrados em {LOG_FILE}")
+    cursor.close()
+    conn.close()
+    print(f"Monitoramento finalizado. {len(registros)} registros processados.")
 
 if __name__ == "__main__":
     monitorar_sinais_vitais()
