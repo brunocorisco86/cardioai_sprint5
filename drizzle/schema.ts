@@ -46,3 +46,19 @@ export const modelMetrics = mysqlTable("model_metrics", {
 
 export type ModelMetric = typeof modelMetrics.$inferSelect;
 export type InsertModelMetric = typeof modelMetrics.$inferInsert;
+
+/**
+ * Tabela para armazenar registros clínicos de sinais vitais (RPA / SPRINT 5)
+ */
+export const clinicalRecords = mysqlTable("clinical_records", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  pressaoSistolica: int("pressaoSistolica").notNull(),
+  pressaoDiastolica: int("pressaoDiastolica").notNull(),
+  frequenciaCardiaca: int("frequenciaCardiaca").notNull(),
+  status: varchar("status", { length: 32 }).default("normal").notNull(), // normal, alerta, critico
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ClinicalRecord = typeof clinicalRecords.$inferSelect;
+export type InsertClinicalRecord = typeof clinicalRecords.$inferInsert;

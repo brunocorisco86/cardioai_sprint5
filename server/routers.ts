@@ -4,6 +4,8 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { getAllModelMetrics, getUserPredictions } from "./db";
 import { z } from "zod";
+import { sendMessageToWatson } from "./watson";
+import { invokeLLM } from "./_core/llm";
 
 export const appRouter = router({
   system: systemRouter,
@@ -16,6 +18,48 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+  }),
+
+  // Rota para o Chatbot (Watson + IA Generativa)
+  chat: router({
+    sendMessage: publicProcedure
+      .input(z.object({
+        text: z.string(),
+        sessionId: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const result = await sendMessageToWatson(input.text, input.sessionId);
+          return result;
+        } catch (error) {
+          console.error("Erro Watson:", error);
+          throw new Error("Erro ao enviar mensagem para o Watson Assistant.");
+        }
+      }),
+
+    // IR ALÉM 1 - Extração de Informações Clínicas
+    extractClinicalInfo: publicProcedure
+      .input(z.object({
+        text: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const result = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: "Você é um assistente cardiológico. Extraia informações clínicas do texto fornecido pelo paciente e retorne APENAS um JSON estruturado. Se não encontrar a informação, use null.\nCampos: pressão_sistolica, pressão_diastolica, frequência_cardíaca, sintomas (array de strings), medicamentos (array de strings)."
+            },
+            {
+              role: "user",
+              content: input.text
+            }
+          ],
+          responseFormat: { type: "json_object" }
+        });
+
+        const content = result.choices[0].message.content;
+        return JSON.parse(typeof content === 'string' ? content : JSON.stringify(content));
+      }),
   }),
 
   // Rotas para métricas dos modelos

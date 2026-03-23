@@ -2,7 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getLoginUrl } from "@/const";
-import { Activity, Brain, BarChart3, FileText, Heart } from "lucide-react";
+import { Activity, Brain, BarChart3, FileText, Heart, Sparkles } from "lucide-react";
 import { Link } from "wouter";
 
 export default function Home() {
@@ -105,6 +105,21 @@ export default function Home() {
               <CardDescription>
                 Métricas detalhadas incluindo acurácia, precisão, recall, F1-score e matrizes de confusão para análise completa.
               </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card className="border-2 hover:border-pink-200 transition-colors">
+            <CardHeader>
+              <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center mb-3">
+                <Sparkles className="w-6 h-6 text-pink-600" />
+              </div>
+              <CardTitle>Assistente IA</CardTitle>
+              <CardDescription>
+                Chatbot conversacional via IBM Watson com extração inteligente de dados clínicos usando IA Generativa.
+              </CardDescription>
+              <Link href="/chatbot">
+                <Button variant="link" className="px-0">Acessar Assistente →</Button>
+              </Link>
             </CardHeader>
           </Card>
         </div>

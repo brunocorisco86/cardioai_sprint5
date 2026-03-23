@@ -7,12 +7,14 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Resultados from "./pages/Resultados";
 import Documentacao from "./pages/Documentacao";
+import Chatbot from "./pages/Chatbot";
 
 function Router() {
   return (
     <Switch>
       <Route path={"/"} component={Home} />
       <Route path={"/resultados"} component={Resultados} />
+      <Route path={"/chatbot"} component={Chatbot} />
       <Route path={"/documentacao"} component={Documentacao} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
