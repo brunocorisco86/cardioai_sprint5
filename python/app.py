@@ -37,9 +37,17 @@ def chat():
             input={'message_type': 'text', 'text': text}
         ).get_result()
 
+        # Extrair texto da resposta generic do Watson V2
+        output_text = "Desculpe, não entendi."
+        if 'output' in response and 'generic' in response['output']:
+            for item in response['output']['generic']:
+                if item.get('response_type') == 'text':
+                    output_text = item.get('text')
+                    break
+
         return jsonify({
             'sessionId': session_id,
-            'response': response['output']['generic'][0]['text'] if response['output']['generic'] else "Desculpe, não entendi."
+            'response': output_text
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500

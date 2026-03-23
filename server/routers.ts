@@ -43,22 +43,35 @@ export const appRouter = router({
         text: z.string(),
       }))
       .mutation(async ({ input }) => {
-        const result = await invokeLLM({
-          messages: [
-            {
-              role: "system",
-              content: "Você é um assistente cardiológico. Extraia informações clínicas do texto fornecido pelo paciente e retorne APENAS um JSON estruturado. Se não encontrar a informação, use null.\nCampos: pressão_sistolica, pressão_diastolica, frequência_cardíaca, sintomas (array de strings), medicamentos (array de strings)."
-            },
-            {
-              role: "user",
-              content: input.text
-            }
-          ],
-          responseFormat: { type: "json_object" }
-        });
+        try {
+          const result = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: "Você é um assistente cardiológico especializado em triagem. Extraia informações clínicas do texto fornecido pelo paciente e retorne APENAS um JSON estruturado. Se não encontrar a informação em particular, use null.\n\nCampos obrigatórios no JSON:\n- pressao_sistolica (número ou null)\n- pressao_diastolica (número ou null)\n- frequencia_cardiaca (número ou null)\n- sintomas (array de strings)\n- medicamentos (array de strings)\n- orientacao_recomendada (string sugerindo o próximo passo)"
+              },
+              {
+                role: "user",
+                content: input.text
+              }
+            ],
+            responseFormat: { type: "json_object" }
+          });
 
-        const content = result.choices[0].message.content;
-        return JSON.parse(typeof content === 'string' ? content : JSON.stringify(content));
+          const content = result.choices[0].message.content;
+          const parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
+
+          return {
+            success: true,
+            data: parsedContent
+          };
+        } catch (error) {
+          console.error("Erro na extração de dados clínicos:", error);
+          return {
+            success: false,
+            error: "Não foi possível extrair informações do texto informado."
+          };
+        }
       }),
   }),
 

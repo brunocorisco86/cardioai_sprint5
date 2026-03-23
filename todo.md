@@ -31,13 +31,13 @@
 - [x] Estruturar persistência de alertas no banco de dados
 
 ### IA Generativa (Ir Além)
-- [ ] Implementar extração de dados clínicos de textos não estruturados via Prompting
-- [ ] Criar conversor de saída clínica para formato JSON estruturado
+- [x] Implementar extração de dados clínicos de textos não estruturados via Prompting
+- [x] Criar conversor de saída clínica para formato JSON estruturado
 
 ### Documentação e Entrega
 - [x] Atualizar README.md com informações da Sprint 5
 - [x] Organizar repositório para nova entrega (Push no novo repo)
-- [ ] Elaborar relatório técnico do fluxo conversacional e RPA
+- [x] Elaborar relatório técnico do fluxo conversacional e RPA
 - [ ] Gravar vídeo de demonstração (até 3 minutos)
 
 ## Documentação (Geral)

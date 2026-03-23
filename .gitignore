@@ -106,6 +106,15 @@ temp/
 *.sqlite
 *.sqlite3
 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+venv/
+.env
+
 # Modelos
 analises/models
 analises/data

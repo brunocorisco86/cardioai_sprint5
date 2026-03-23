@@ -55,8 +55,9 @@ Análise profunda de ECGs utilizando Redes Neurais Convolucionais:
 Nesta fase, o CardioIA evoluiu para uma experiência interativa e automatizada:
 *   **Chatbot Inteligente**: Assistente conversacional modelado no **IBM Watson Assistant**, capaz de interpretar intenções e guiar o paciente.
 *   **Backend Híbrido**: Integração via **Flask (Python)** e **Node.js** para comunicação com a API do Watson.
-*   **Monitoramento RPA**: Robô de automação (`python/rpa_monitor.py`) que monitora sinais vitais em bancos de dados, utiliza IA para identificar anomalias (Taquicardia/Hipertensão) e gera logs de execução estruturados.
-*   **Interface Web**: Dashboard em React integrado com o chat em tempo real.
+*   **Monitoramento RPA**: Robô de automação (`python/rpa_monitor.py`) que monitora sinais vitais em bancos de dados (MySQL), utiliza IA simbólica para identificar anomalias (Taquicardia/Hipertensão) e gera logs de execução persistidos em MongoDB.
+*   **IA Generativa**: Extração de dados clínicos de textos não estruturados (prompting e LLM) integrada ao backend.
+*   **Interface Web**: Dashboard em React integrado com o chat em tempo real (IBM Watson).
 
 ---
 
@@ -113,6 +114,8 @@ python rpa_monitor.py
 ---
 
 ## 📊 Visualização de Resultados
+Consulte o [Relatório Técnico da Sprint 5](./knowledge/relatorio_tecnico_sprint5.md) para detalhes da implementação do Assistente e RPA.
+
 Os relatórios de desempenho dos modelos de IA e Visão Computacional podem ser encontrados na página **"Ver Resultados"** da interface ou em `client/public/reports_/`:
 *   `04_comparacao_metricas.png`: Comparativo entre modelos.
 *   `05_matrizes_confusao.png`: Precisão diagnóstica.

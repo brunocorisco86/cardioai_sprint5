@@ -50,8 +50,20 @@ export async function sendMessageToWatson(text: string, sessionId?: string) {
     },
   });
 
+  const outputGeneric = response.result.output.generic;
+  let outputText = "Desculpe, não entendi.";
+
+  if (outputGeneric && outputGeneric.length > 0) {
+    for (const item of outputGeneric) {
+      if (item.response_type === "text") {
+        outputText = item.text ?? outputText;
+        break;
+      }
+    }
+  }
+
   return {
     sessionId: activeSessionId,
-    response: response.result.output.generic?.[0]?.text ?? "Desculpe, não entendi.",
+    response: outputText,
   };
 }
